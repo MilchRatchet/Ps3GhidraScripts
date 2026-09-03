@@ -1,0 +1,22 @@
+# Power ISA 64-bit big-endian Altivec language with PS3-specific instructions.
+
+@define ENDIAN "big"
+
+@define IS_ISA "1"
+@define NoLegacyIntegerMultiplyAccumulate "1"
+
+@define REGISTER_SIZE "8"
+@define BIT_64 "64"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@include "ppc_common.sinc"
+@include "ppc_isa.sinc"
+
+@include "ppc_a2.sinc"
+@include "quicciii.sinc"
+@include "FPRC.sinc"
+@include "altivec.sinc"
+@include "ps3.sinc"

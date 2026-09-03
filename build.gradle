@@ -1,9 +1,9 @@
 // Builds a Ghidra Extension for a given Ghidra installation.
 //
-// An absolute path to the Ghidra installation directory must be supplied either by setting the 
+// An absolute path to the Ghidra installation directory must be supplied either by setting the
 // GHIDRA_INSTALL_DIR environment variable or Gradle project property:
 //
-//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra> 
+//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra>
 //     > gradle
 //
 //         or
@@ -31,4 +31,76 @@ else {
 	throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
+
+def ps3LanguageDir = file("data/languages")
+def powerPcLanguageDir = file(ghidraInstallDir + "/Ghidra/Processors/PowerPC/data/languages")
+def ps3LanguageSpec = file("data/languages/ppc_64_ps3_be.slaspec")
+def ps3LanguageSla = file("data/languages/ppc_64_ps3_be.sla")
+def ps3ProcessorSpec = file("data/languages/ppc_64_ps3.pspec")
+def ps3CompilerSpec = file("data/languages/ppc_64_32_ps3.cspec")
+
+tasks.register("compilePs3Language") {
+	group = "Ghidra Private"
+	inputs.file ps3LanguageSpec
+	inputs.file new File(powerPcLanguageDir, "ppc_64.pspec")
+	inputs.file new File(powerPcLanguageDir, "ppc_64_32.cspec")
+	inputs.property "ghidraInstallDir", ghidraInstallDir
+	outputs.files ps3LanguageSla, ps3ProcessorSpec, ps3CompilerSpec
+
+	doLast {
+		copy {
+			from new File(powerPcLanguageDir, "ppc_64.pspec")
+			into ps3LanguageDir
+			rename "ppc_64.pspec", ps3ProcessorSpec.name
+		}
+		copy {
+			from new File(powerPcLanguageDir, "ppc_64_32.cspec")
+			into ps3LanguageDir
+			rename "ppc_64_32.cspec", ps3CompilerSpec.name
+		}
+
+		def compilerSpecText = ps3CompilerSpec.getText("UTF-8")
+		def unaffectedPattern = ~/(?s)(<unaffected\b[^>]*>)(.*?)(<\/unaffected>)/
+		def unaffectedMatcher = unaffectedPattern.matcher(compilerSpecText)
+		if (!unaffectedMatcher.find() || unaffectedMatcher.find()) {
+			throw new GradleException("Expected exactly one <unaffected> block in ${ps3CompilerSpec}")
+		}
+
+		def unaffectedContents = unaffectedMatcher.group(2)
+		def r2Pattern = ~/<register\b[^>]*\bname\s*=\s*[\"']r2[\"'][^>]*\/?>/
+		if (!r2Pattern.matcher(unaffectedContents).find()) {
+			def registerMatcher = ~/(?m)^[ \t]*(<register\b)/.matcher(unaffectedContents)
+			def indentation = registerMatcher.find() ? unaffectedContents.substring(registerMatcher.start(), registerMatcher.start(1)) : "    "
+			def lineSeparator = compilerSpecText.contains("\r\n") ? "\r\n" : "\n"
+			def contentWithoutTrailingWhitespace = unaffectedContents.replaceFirst(/\s*$/, "")
+			def trailingWhitespace = unaffectedContents.substring(contentWithoutTrailingWhitespace.length())
+			def updatedContents = contentWithoutTrailingWhitespace + lineSeparator + indentation +
+				'<register name="r2"/>' + lineSeparator + trailingWhitespace
+			compilerSpecText = compilerSpecText.substring(0, unaffectedMatcher.start(2)) +
+				updatedContents + compilerSpecText.substring(unaffectedMatcher.end(2))
+			ps3CompilerSpec.setText(compilerSpecText, "UTF-8")
+		}
+
+		def sleigh = new File(ghidraInstallDir, "support/sleigh" +
+			(System.getProperty("os.name").toLowerCase().contains("windows") ? ".bat" : ""))
+		def sleighArgs = ["-a", "-i", powerPcLanguageDir.absolutePath, "-o",
+			ps3LanguageDir.absolutePath, ps3LanguageSpec.absolutePath]
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			exec {
+				commandLine "cmd", "/c", sleigh.absolutePath
+				args sleighArgs
+			}
+		}
+		else {
+			exec {
+				commandLine sleigh.absolutePath
+				args sleighArgs
+			}
+		}
+	}
+}
+
+tasks.named("buildExtension") {
+	dependsOn "compilePs3Language"
+}
 

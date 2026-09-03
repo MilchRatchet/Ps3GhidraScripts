@@ -1,0 +1,11 @@
+# Sony PlayStation 3 PPU instructions not present in the generic PowerPC language.
+
+:lvlx vrD,RA_OR_ZERO,B is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=519 & Rc=0
+{
+	build RA_OR_ZERO;
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	aligned:$(REGISTER_SIZE) = ea & 0xfffffffffffffff0;
+	data:16 = *[ram]:16 aligned;
+	shift:$(REGISTER_SIZE) = (ea & 0xf) * 8;
+	vrD = data << shift;
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="PowerPC"
+            endian="big"
+            size="64"
+            variant="PS3"
+            version="1.7"
+            slafile="ppc_64_ps3_be.sla"
+            processorspec="ppc_64_ps3.pspec"
+            id="PowerPC:BE:64:PS3">
+    <description>PowerISA-Altivec-64-32addr with PS3 PPU instructions</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_64_32_ps3.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:common64"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+    <external_name tool="qemu" name="qemu-ppc64abi32"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
+  </language>
+</language_definitions>

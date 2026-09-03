@@ -4,11 +4,14 @@ A collection of scripts for parsing PS3 executables with Ghidra.
 
 Relocations are not currently supported.
 
-When loading a prx/elf into Ghidra be sure to select the following language (By default this is the one under the automatic selection when the recommended checkbox is disabled)
+When loading a prx/elf into Ghidra be sure to select the following language (by default this is the one under the automatic selection when the recommended checkbox is disabled)
 ```
-PowerISA-Altivec-64-32addr
+PowerISA-Altivec-64-32addr with PS3 PPU instructions
 ```
 Make sure to select the BIG endian, otherwise the scripts will throw an error upon running them.
+
+The PS3 language variant adds Cell-specific PPU instructions such as `lvlx`. For example,
+the big-endian bytes `7C C4 3C 0E` disassemble as `lvlx v6, r4, r7`.
 
 ## Installation
 
@@ -18,13 +21,14 @@ Simply grab the .zip in release corresponding to your Ghidra version and install
 
 Make sure the extension is active(there should be a checkmark on the left), scripts should then be accessible in CodeBrowser through "Window=>Script Manager".
 
-## Required change
-To avoid issues with decompilation the following change is needed in `Ghidra\Processors\PowerPC\data\languages\ppc_64_32.cspec`
-
-Add `<register name="r2"/>` to the `<unaffected>` list
+## Compiler specification
+The extension automatically includes the `r2` register in the PS3 language's
+`<unaffected>` list to avoid decompilation issues. The original PowerPC compiler
+specification in the Ghidra installation is not modified.
 
 ## Possible problems
-Some cell specific instructions are currently not supported in Ghidra, these are the vector store/get lvlx etc, these appear in games and may break decompilation currently.
+Some Cell-specific instructions other than those implemented by the PS3 language variant
+are currently not supported in Ghidra. These may appear in games and may break decompilation.
 
 ## AnalyzePs3Binary.java
 The main script, this should be used BEFORE analysis is run on the program.
