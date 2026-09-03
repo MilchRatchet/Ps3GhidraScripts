@@ -62,11 +62,15 @@ tasks.register("compilePs3Language") {
 		def compilerSpecText = ps3CompilerSpec.getText("UTF-8")
 		def unaffectedPattern = ~/(?s)(<unaffected\b[^>]*>)(.*?)(<\/unaffected>)/
 		def unaffectedMatcher = unaffectedPattern.matcher(compilerSpecText)
-		if (!unaffectedMatcher.find() || unaffectedMatcher.find()) {
+		if (!unaffectedMatcher.find()) {
 			throw new GradleException("Expected exactly one <unaffected> block in ${ps3CompilerSpec}")
 		}
-
+		def unaffectedStart = unaffectedMatcher.start(2)
+		def unaffectedEnd = unaffectedMatcher.end(2)
 		def unaffectedContents = unaffectedMatcher.group(2)
+		if (unaffectedMatcher.find()) {
+			throw new GradleException("Expected exactly one <unaffected> block in ${ps3CompilerSpec}")
+		}
 		def r2Pattern = ~/<register\b[^>]*\bname\s*=\s*[\"']r2[\"'][^>]*\/?>/
 		if (!r2Pattern.matcher(unaffectedContents).find()) {
 			def registerMatcher = ~/(?m)^[ \t]*(<register\b)/.matcher(unaffectedContents)
@@ -76,8 +80,8 @@ tasks.register("compilePs3Language") {
 			def trailingWhitespace = unaffectedContents.substring(contentWithoutTrailingWhitespace.length())
 			def updatedContents = contentWithoutTrailingWhitespace + lineSeparator + indentation +
 				'<register name="r2"/>' + lineSeparator + trailingWhitespace
-			compilerSpecText = compilerSpecText.substring(0, unaffectedMatcher.start(2)) +
-				updatedContents + compilerSpecText.substring(unaffectedMatcher.end(2))
+			compilerSpecText = compilerSpecText.substring(0, unaffectedStart) +
+				updatedContents + compilerSpecText.substring(unaffectedEnd)
 			ps3CompilerSpec.setText(compilerSpecText, "UTF-8")
 		}
 
