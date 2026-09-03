@@ -34,6 +34,7 @@ else {
 
 def ps3LanguageDir = file("data/languages")
 def powerPcLanguageDir = file(ghidraInstallDir + "/Ghidra/Processors/PowerPC/data/languages")
+def ps3LanguageCompileDir = file("build/ps3-language")
 def ps3LanguageSpec = file("data/languages/ppc_64_ps3_be.slaspec")
 def ps3LanguageSla = file("data/languages/ppc_64_ps3_be.sla")
 def ps3ProcessorSpec = file("data/languages/ppc_64_ps3.pspec")
@@ -73,7 +74,8 @@ tasks.register("compilePs3Language") {
 		}
 		def r2Pattern = ~/<register\b[^>]*\bname\s*=\s*[\"']r2[\"'][^>]*\/?>/
 		if (!r2Pattern.matcher(unaffectedContents).find()) {
-			def registerMatcher = ~/(?m)^[ \t]*(<register\b)/.matcher(unaffectedContents)
+			def registerPattern = ~/(?m)^[ \t]*(<register\b)/
+			def registerMatcher = registerPattern.matcher(unaffectedContents)
 			def indentation = registerMatcher.find() ? unaffectedContents.substring(registerMatcher.start(), registerMatcher.start(1)) : "    "
 			def lineSeparator = compilerSpecText.contains("\r\n") ? "\r\n" : "\n"
 			def contentWithoutTrailingWhitespace = unaffectedContents.replaceFirst(/\s*$/, "")
@@ -87,8 +89,22 @@ tasks.register("compilePs3Language") {
 
 		def sleigh = new File(ghidraInstallDir, "support/sleigh" +
 			(System.getProperty("os.name").toLowerCase().contains("windows") ? ".bat" : ""))
-		def sleighArgs = ["-a", "-i", powerPcLanguageDir.absolutePath, "-o",
-			ps3LanguageDir.absolutePath, ps3LanguageSpec.absolutePath]
+		delete ps3LanguageCompileDir
+		copy {
+			from powerPcLanguageDir
+			include "*.sinc"
+			into ps3LanguageCompileDir
+		}
+		copy {
+			from ps3LanguageSpec
+			into ps3LanguageCompileDir
+		}
+		copy {
+			from new File(ps3LanguageDir, "ps3.sinc")
+			into ps3LanguageCompileDir
+		}
+		def sleighArgs = [new File(ps3LanguageCompileDir, ps3LanguageSpec.name).absolutePath,
+			ps3LanguageSla.absolutePath]
 		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
 			exec {
 				commandLine "cmd", "/c", sleigh.absolutePath
