@@ -2,3 +2,6 @@
 .gradle
 build
 dist
+data/languages/ppc_64_32_ps3.cspec
+data/languages/ppc_64_ps3.pspec
+data/languages/ppc_64_ps3_be.sla

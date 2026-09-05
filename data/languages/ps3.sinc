@@ -1,6 +1,6 @@
 # Sony PlayStation 3 PPU instructions not present in the generic PowerPC language.
 
-:lvlx vrD,RA_OR_ZERO,B is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=519 & Rc=0
+:lvlx vrD,RA_OR_ZERO,B is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=519 & BIT_0=0
 {
 	build RA_OR_ZERO;
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;

@@ -39,10 +39,15 @@ def ps3LanguageSpec = file("data/languages/ppc_64_ps3_be.slaspec")
 def ps3LanguageSla = file("data/languages/ppc_64_ps3_be.sla")
 def ps3ProcessorSpec = file("data/languages/ppc_64_ps3.pspec")
 def ps3CompilerSpec = file("data/languages/ppc_64_32_ps3.cspec")
+def ps3LanguageSources = fileTree(powerPcLanguageDir) {
+	include "*.sinc"
+}
 
 tasks.register("compilePs3Language") {
 	group = "Ghidra Private"
 	inputs.file ps3LanguageSpec
+	inputs.file new File(ps3LanguageDir, "ps3.sinc")
+	inputs.files ps3LanguageSources
 	inputs.file new File(powerPcLanguageDir, "ppc_64.pspec")
 	inputs.file new File(powerPcLanguageDir, "ppc_64_32.cspec")
 	inputs.property "ghidraInstallDir", ghidraInstallDir
@@ -95,6 +100,20 @@ tasks.register("compilePs3Language") {
 			include "*.sinc"
 			into ps3LanguageCompileDir
 		}
+		def requiredSources = [
+			"ppc_common.sinc",
+			"ppc_isa.sinc",
+			"ppc_a2.sinc",
+			"quicciii.sinc",
+			"FPRC.sinc",
+			"altivec.sinc"
+		]
+		def missingSources = requiredSources.findAll {
+			!new File(ps3LanguageCompileDir, it).isFile()
+		}
+		if (!missingSources.isEmpty()) {
+			throw new GradleException("Missing PowerPC Sleigh source files: ${missingSources.join(', ')}")
+		}
 		copy {
 			from ps3LanguageSpec
 			into ps3LanguageCompileDir
@@ -122,5 +141,9 @@ tasks.register("compilePs3Language") {
 
 tasks.named("buildExtension") {
 	dependsOn "compilePs3Language"
+	from (ps3LanguageCompileDir) {
+		include "*.sinc"
+		into project.name + "/data/languages"
+	}
 }
 

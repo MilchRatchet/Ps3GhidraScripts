@@ -21,6 +21,14 @@ Simply grab the .zip in release corresponding to your Ghidra version and install
 
 Make sure the extension is active(there should be a checkmark on the left), scripts should then be accessible in CodeBrowser through "Window=>Script Manager".
 
+When building the extension from source, set `GHIDRA_INSTALL_DIR` to the Ghidra installation that matches the intended release, then run:
+
+```text
+gradlew.bat clean buildExtension
+```
+
+Install the generated ZIP from `dist/`. The build copies the PowerPC Sleigh include files required by the PS3 language into the extension package; do not install the project JAR or select the `.slaspec` source directly.
+
 ## Compiler specification
 The extension automatically includes the `r2` register in the PS3 language's
 `<unaffected>` list to avoid decompilation issues. The original PowerPC compiler
